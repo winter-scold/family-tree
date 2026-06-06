@@ -5,41 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Family Tree</title>
 
-    <!-- Family Chart is D3-based. This no-build version works well on GitHub Pages. -->
     <script src="https://unpkg.com/d3@7"></script>
     <link rel="stylesheet" href="https://unpkg.com/family-chart@0.9.0/dist/styles/family-chart.css" />
     <script src="https://unpkg.com/family-chart@0.9.0/dist/family-chart.min.js"></script>
 
-    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/styles.css?v=4" />
   </head>
+
   <body>
     <header class="site-header">
       <div>
         <p class="eyebrow">Family tree</p>
-        <h1>Benmaamar family tree starter</h1>
-        <p class="subtitle">Draft based on the handwritten starter notes. Edit <code>src/data.js</code> to correct spellings and relationships.</p>
+        <h1>Family Tree</h1>
       </div>
+
       <div class="controls">
-        <button id="showAll">Show all</button>
-        <button id="showPaternalGrandfather">Father’s father side</button>
-        <button id="showPaternalGrandmother">Father’s mother side</button>
+        <button id="showAll" class="active">Show all</button>
+        <button id="showAmezianeLine">Ameziane line</button>
+        <button id="showDjemilaLine">Djemila line</button>
+        <button id="showTaousLine">Taous line</button>
       </div>
     </header>
 
-    <main>
-      <aside class="notes-panel">
-        <h2>Assumptions to check</h2>
-        <ul>
-          <li><strong>Ameziane</strong> + <strong>Djemila</strong> are modelled as Mustapha’s parents.</li>
-          <li><strong>Ahcen</strong> + <strong>K’Mamma</strong> are modelled as Ameziane’s parents.</li>
-          <li><strong>Taous</strong> + <strong>Mohamed Tahar</strong> are modelled as Djemila’s parents.</li>
-          <li>Names marked <strong>tbc</strong> need spelling confirmation.</li>
-        </ul>
-      </aside>
-
+    <main class="full-width-main">
       <section id="FamilyChart" class="f3 chart-shell" aria-label="Interactive family tree"></section>
     </main>
 
-    <script type="module" src="./src/app.js"></script>
+    <script type="module">
+      import { getFamilyData } from './src/data.js?v=4';
+
+      const chartSelector = '#FamilyChart';
+      const f3lib = globalThis.f3;
+
+      if (!f3lib) {
+        document.querySelector(chartSelector).innerHTML = `
+          <div class="error-card">
+            <h2>Family Chart did not load</h2>
+            <p>Check that the CDN scripts are reachable.</p>
+          </div>
+        `;
+      } else {
+        renderTree('all');
+        wireControls();
+      }
+
+      function renderTree(filter) {
+        const container = document.querySelector(chartSelector);
+        container.innerHTML = '';
+
+        const chart = f3lib.createChart(chartSelector, getFamilyData(filter));
+
+        chart
+          .setCardHtml()
+          .setCardDisplay([
+            ['first name', 'last name'],
+            ['relationship'],
+            ['notes'],
+          ]);
+
+        chart.updateTree({ initial: true });
+      }
+
+      function wireControls() {
+        document.querySelector('#showAll').addEventListener('click', () => setFilter('all', '#showAll'));
+        document.querySelector('#showAmezianeLine').addEventListener('click', () => setFilter('paternal-grandfather', '#showAmezianeLine'));
+        document.querySelector('#showDjemilaLine').addEventListener('click', () => setFilter('paternal-grandmother', '#showDjemilaLine'));
+        document.querySelector('#showTaousLine').addEventListener('click', () => setFilter('taous-line', '#showTaousLine'));
+      }
+
+      function setFilter(filter, activeButtonSelector) {
+        renderTree(filter);
+
+        document.querySelectorAll('.controls button').forEach((button) => {
+          button.classList.remove('active');
+        });
+
+        document.querySelector(activeButtonSelector).classList.add('active');
+      }
+    </script>
   </body>
 </html>
