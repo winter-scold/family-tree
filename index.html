@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Family Tree</title>
+
+    <!-- Family Chart is D3-based. This no-build version works well on GitHub Pages. -->
+    <script src="https://unpkg.com/d3@7"></script>
+    <link rel="stylesheet" href="https://unpkg.com/family-chart@0.9.0/dist/styles/family-chart.css" />
+    <script src="https://unpkg.com/family-chart@0.9.0/dist/family-chart.min.js"></script>
+
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Family tree</p>
+        <h1>Benmaamar family tree starter</h1>
+        <p class="subtitle">Draft based on the handwritten starter notes. Edit <code>src/data.js</code> to correct spellings and relationships.</p>
+      </div>
+      <div class="controls">
+        <button id="showAll">Show all</button>
+        <button id="showPaternalGrandfather">Father’s father side</button>
+        <button id="showPaternalGrandmother">Father’s mother side</button>
+      </div>
+    </header>
+
+    <main>
+      <aside class="notes-panel">
+        <h2>Assumptions to check</h2>
+        <ul>
+          <li><strong>Ameziane</strong> + <strong>Djemila</strong> are modelled as Mustapha’s parents.</li>
+          <li><strong>Ahcen</strong> + <strong>K’Mamma</strong> are modelled as Ameziane’s parents.</li>
+          <li><strong>Taous</strong> + <strong>Mohamed Tahar</strong> are modelled as Djemila’s parents.</li>
+          <li>Names marked <strong>tbc</strong> need spelling confirmation.</li>
+        </ul>
+      </aside>
+
+      <section id="FamilyChart" class="f3 chart-shell" aria-label="Interactive family tree"></section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
