@@ -1,47 +1,317 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Family Tree</title>
 
+    <script>
+      const savedTheme = localStorage.getItem('family-tree-theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+
     <script src="https://unpkg.com/d3@7"></script>
     <link rel="stylesheet" href="https://unpkg.com/family-chart@0.9.0/dist/styles/family-chart.css" />
     <script src="https://unpkg.com/family-chart@0.9.0/dist/family-chart.min.js"></script>
 
-    <link rel="stylesheet" href="./src/styles.css?v=4" />
+    <style>
+      :root {
+        --bg: #f7f7f4;
+        --surface: rgba(255, 255, 255, 0.86);
+        --surface-solid: #ffffff;
+        --surface-strong: #f0eee8;
+        --text: #171717;
+        --muted: #6b665f;
+        --line: rgba(24, 24, 24, 0.12);
+        --accent: #8b5e34;
+        --accent-soft: #efe3d3;
+        --shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+        --card-shadow: 0 12px 30px rgba(15, 23, 42, 0.13);
+        --button-bg: rgba(255, 255, 255, 0.75);
+        --button-hover: #ffffff;
+        --button-active: #171717;
+        --button-active-text: #ffffff;
+      }
+
+      html[data-theme='dark'] {
+        --bg: #11100e;
+        --surface: rgba(24, 23, 21, 0.82);
+        --surface-solid: #1c1a17;
+        --surface-strong: #2a2621;
+        --text: #f4f1ea;
+        --muted: #b8b0a4;
+        --line: rgba(255, 255, 255, 0.12);
+        --accent: #d7a86e;
+        --accent-soft: #3a2d1f;
+        --shadow: 0 18px 56px rgba(0, 0, 0, 0.36);
+        --card-shadow: 0 16px 42px rgba(0, 0, 0, 0.32);
+        --button-bg: rgba(36, 33, 29, 0.82);
+        --button-hover: #2f2b26;
+        --button-active: #f4f1ea;
+        --button-active-text: #11100e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top left, rgba(139, 94, 52, 0.16), transparent 30rem),
+          radial-gradient(circle at bottom right, rgba(139, 94, 52, 0.1), transparent 32rem),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+          sans-serif;
+      }
+
+      .app {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .toolbar {
+        position: fixed;
+        z-index: 20;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        max-width: calc(100vw - 28px);
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        box-shadow: var(--shadow);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 8px 0 10px;
+        white-space: nowrap;
+      }
+
+      .brand-mark {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px var(--accent-soft);
+      }
+
+      .brand-title {
+        font-size: 14px;
+        font-weight: 760;
+        letter-spacing: -0.02em;
+      }
+
+      .divider {
+        width: 1px;
+        height: 28px;
+        background: var(--line);
+      }
+
+      .filters {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--button-bg);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 650;
+        line-height: 1;
+        padding: 10px 13px;
+        transition:
+          background 160ms ease,
+          color 160ms ease,
+          border-color 160ms ease,
+          transform 160ms ease;
+      }
+
+      button:hover {
+        background: var(--button-hover);
+        transform: translateY(-1px);
+      }
+
+      button.active {
+        border-color: var(--button-active);
+        background: var(--button-active);
+        color: var(--button-active-text);
+      }
+
+      .theme-toggle {
+        min-width: 42px;
+        padding-inline: 12px;
+      }
+
+      #FamilyChart {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .chart-shell {
+        background:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 42px 42px;
+      }
+
+      .error-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        max-width: 520px;
+        transform: translate(-50%, -50%);
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--surface-solid);
+        box-shadow: var(--shadow);
+      }
+
+      .error-card h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .error-card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .f3 {
+        color: var(--text);
+      }
+
+      .f3 svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      .f3 .card,
+      .f3 foreignObject > div {
+        border-radius: 18px !important;
+      }
+
+      .f3 .card {
+        overflow: hidden;
+        border: 1px solid var(--line) !important;
+        background: var(--surface-solid) !important;
+        box-shadow: var(--card-shadow) !important;
+      }
+
+      .f3 .card-body,
+      .f3 .card-inner,
+      .f3 .card-label {
+        background: var(--surface-solid) !important;
+        color: var(--text) !important;
+      }
+
+      .f3 text {
+        fill: var(--text) !important;
+      }
+
+      .f3 path,
+      .f3 line {
+        stroke: color-mix(in srgb, var(--text) 32%, transparent) !important;
+      }
+
+      @media (max-width: 820px) {
+        .toolbar {
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          transform: none;
+          flex-wrap: wrap;
+          justify-content: center;
+          border-radius: 24px;
+        }
+
+        .brand {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .divider {
+          display: none;
+        }
+
+        .filters {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
+        button {
+          font-size: 12px;
+          padding: 9px 11px;
+        }
+      }
+    </style>
   </head>
 
   <body>
-    <header class="site-header">
-      <div>
-        <p class="eyebrow">Family tree</p>
-        <h1>Family Tree</h1>
-      </div>
+    <div class="app">
+      <nav class="toolbar" aria-label="Family tree controls">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-title">Family Tree</span>
+        </div>
 
-      <div class="controls">
-        <button id="showAll" class="active">Show all</button>
-        <button id="showAmezianeLine">Ameziane line</button>
-        <button id="showDjemilaLine">Djemila line</button>
-        <button id="showTaousLine">Taous line</button>
-      </div>
-    </header>
+        <div class="divider" aria-hidden="true"></div>
 
-    <main class="full-width-main">
-      <section id="FamilyChart" class="f3 chart-shell" aria-label="Interactive family tree"></section>
-    </main>
+        <div class="filters">
+          <button id="showAll" class="active" type="button">All</button>
+          <button id="showAmezianeLine" type="button">Ameziane line</button>
+          <button id="showDjemilaLine" type="button">Djemila line</button>
+          <button id="showTaousLine" type="button">Taous notes</button>
+          <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle dark mode">☾</button>
+        </div>
+      </nav>
+
+      <main>
+        <section id="FamilyChart" class="f3 chart-shell" aria-label="Interactive family tree"></section>
+      </main>
+    </div>
 
     <script type="module">
-      import { getFamilyData } from './src/data.js?v=4';
+      import { getFamilyData } from './src/data.js?v=7';
 
       const chartSelector = '#FamilyChart';
       const f3lib = globalThis.f3;
+      const themeToggle = document.querySelector('#themeToggle');
+
+      syncThemeButton();
 
       if (!f3lib) {
         document.querySelector(chartSelector).innerHTML = `
           <div class="error-card">
-            <h2>Family Chart did not load</h2>
-            <p>Check that the CDN scripts are reachable.</p>
+            <h1>Family Chart did not load</h1>
+            <p>Check your internet connection and confirm the Family Chart CDN is reachable.</p>
           </div>
         `;
       } else {
@@ -60,6 +330,9 @@
           .setCardDisplay([
             ['first name', 'last name'],
             ['relationship'],
+            ['years'],
+            ['location'],
+            ['occupation'],
             ['notes'],
           ]);
 
@@ -68,19 +341,45 @@
 
       function wireControls() {
         document.querySelector('#showAll').addEventListener('click', () => setFilter('all', '#showAll'));
-        document.querySelector('#showAmezianeLine').addEventListener('click', () => setFilter('paternal-grandfather', '#showAmezianeLine'));
-        document.querySelector('#showDjemilaLine').addEventListener('click', () => setFilter('paternal-grandmother', '#showDjemilaLine'));
-        document.querySelector('#showTaousLine').addEventListener('click', () => setFilter('taous-line', '#showTaousLine'));
+        document
+          .querySelector('#showAmezianeLine')
+          .addEventListener('click', () => setFilter('ameziane-line', '#showAmezianeLine'));
+        document
+          .querySelector('#showDjemilaLine')
+          .addEventListener('click', () => setFilter('djemila-line', '#showDjemilaLine'));
+        document
+          .querySelector('#showTaousLine')
+          .addEventListener('click', () => setFilter('taous-line', '#showTaousLine'));
+
+        themeToggle.addEventListener('click', toggleTheme);
       }
 
       function setFilter(filter, activeButtonSelector) {
         renderTree(filter);
 
-        document.querySelectorAll('.controls button').forEach((button) => {
-          button.classList.remove('active');
+        document.querySelectorAll('.filters button').forEach((button) => {
+          if (button.id !== 'themeToggle') button.classList.remove('active');
         });
 
         document.querySelector(activeButtonSelector).classList.add('active');
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.dataset.theme;
+        const next = current === 'dark' ? 'light' : 'dark';
+
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem('family-tree-theme', next);
+        syncThemeButton();
+      }
+
+      function syncThemeButton() {
+        const current = document.documentElement.dataset.theme;
+        themeToggle.textContent = current === 'dark' ? '☀' : '☾';
+        themeToggle.setAttribute(
+          'aria-label',
+          current === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+        );
       }
     </script>
   </body>
